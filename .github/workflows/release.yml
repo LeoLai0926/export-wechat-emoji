@@ -12,10 +12,19 @@ jobs:
       contents: write
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix:
-        platform: [macos-latest]
+        include:
+          - runner: macos-latest
+            app_arch: arm64
+            tauri_arch: aarch64
+            build_cli: true
+          - runner: macos-13
+            app_arch: x64
+            tauri_arch: x64
+            build_cli: false
 
-    runs-on: ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -61,7 +70,8 @@ jobs:
           releaseBody: |
             本版本同时发布 App 与 CLI：
 
-            - macOS App：导出微信表情包
+            - macOS App（Apple Silicon）：wxemoticon-app-macos-arm64.dmg
+            - macOS App（Intel）：wxemoticon-app-macos-x64.dmg
             - CLI：wxemoticon（aarch64 / x86_64）
             - 安装脚本：install-wxemoticon.sh
 
@@ -75,8 +85,39 @@ jobs:
           releaseDraft: false
           prerelease: false
 
-      - name: build wxemoticon cli (arm64 + x86_64)
+      - name: upload app assets with clear names (${{ matrix.app_arch }})
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
+
+          DMG_SRC="$(ls -1 src-tauri/target/release/bundle/dmg/*.dmg | head -n 1)"
+          APP_SRC="$(ls -1 src-tauri/target/release/bundle/macos/*.app.tar.gz | head -n 1)"
+
+          DMG_DST="wxemoticon-app-macos-${{ matrix.app_arch }}.dmg"
+          APP_DST="wxemoticon-app-macos-${{ matrix.app_arch }}.app.tar.gz"
+
+          cp "$DMG_SRC" "$DMG_DST"
+          cp "$APP_SRC" "$APP_DST"
+
+          gh release upload "$TAG" "$DMG_DST" "$APP_DST" --clobber
+
+          DEFAULT_DMG="_${VERSION}_${{ matrix.tauri_arch }}.dmg"
+          DEFAULT_APP="_${{ matrix.tauri_arch }}.app.tar.gz"
+
+          for NAME in "$DEFAULT_DMG" "$DEFAULT_APP"; do
+            ASSET_ID="$(gh release view "$TAG" --json assets --jq ".assets[] | select(.name==\"$NAME\") | .id" || true)"
+            if [[ -n "${ASSET_ID}" ]]; then
+              gh api --method DELETE "repos/${GITHUB_REPOSITORY}/releases/assets/${ASSET_ID}" || true
+            fi
+          done
+
+      - name: build wxemoticon cli (arm64 + x86_64)
+        if: matrix.build_cli
+        run: |
+          set -euo pipefail
           rustup target add x86_64-apple-darwin
           cargo build --manifest-path cli/Cargo.toml --release
           cargo build --manifest-path cli/Cargo.toml --release --target x86_64-apple-darwin
@@ -85,6 +126,7 @@ jobs:
           shasum -a 256 wxemoticon-*.tar.gz > wxemoticon-SHA256SUMS.txt
 
       - name: upload wxemoticon cli assets
+        if: matrix.build_cli
         uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

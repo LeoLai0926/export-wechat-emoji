@@ -1679,6 +1679,47 @@ fn ext_from_content_type(content_type: Option<&str>) -> Option<&'static str> {
     None
 }
 
+fn ext_from_bytes(bytes: &[u8]) -> Option<&'static str> {
+    if bytes.len() >= 6
+        && bytes[0] == 0x47
+        && bytes[1] == 0x49
+        && bytes[2] == 0x46
+        && bytes[3] == 0x38
+        && (bytes[4] == 0x39 || bytes[4] == 0x37)
+        && bytes[5] == 0x61
+    {
+        return Some("gif");
+    }
+    if bytes.len() >= 8
+        && bytes[0] == 0x89
+        && bytes[1] == 0x50
+        && bytes[2] == 0x4e
+        && bytes[3] == 0x47
+        && bytes[4] == 0x0d
+        && bytes[5] == 0x0a
+        && bytes[6] == 0x1a
+        && bytes[7] == 0x0a
+    {
+        return Some("png");
+    }
+    if bytes.len() >= 12
+        && bytes[0] == 0x52
+        && bytes[1] == 0x49
+        && bytes[2] == 0x46
+        && bytes[3] == 0x46
+        && bytes[8] == 0x57
+        && bytes[9] == 0x45
+        && bytes[10] == 0x42
+        && bytes[11] == 0x50
+    {
+        return Some("webp");
+    }
+    if bytes.len() >= 3 && bytes[0] == 0xff && bytes[1] == 0xd8 && bytes[2] == 0xff {
+        return Some("jpg");
+    }
+    None
+}
+
 fn ext_from_url(url: &str) -> Option<String> {
     let lower = url.to_ascii_lowercase();
     let idx = lower.find("/stodownload.")?;
@@ -1723,8 +1764,9 @@ async fn download_one(client: &Client, url: &str, fallback_index0: usize) -> any
                     .and_then(|v| v.to_str().ok())
                     .map(|s| s.to_string());
                 let bytes = resp.bytes().await.context("读取响应失败")?.to_vec();
-                let ext = ext_from_content_type(content_type.as_deref())
+                let ext = ext_from_bytes(&bytes)
                     .map(|s| s.to_string())
+                    .or_else(|| ext_from_content_type(content_type.as_deref()).map(|s| s.to_string()))
                     .or_else(|| ext_from_url(&c))
                     .unwrap_or_else(|| "gif".to_string());
                 let file_key = file_key_from_url(&c, fallback_index0);

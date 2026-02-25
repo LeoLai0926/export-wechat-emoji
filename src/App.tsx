@@ -57,6 +57,7 @@ import {
   writeUsageReadme
 } from './services/exporter'
 import {
+  extFromBytes,
   extFromContentType,
   extFromUrl,
   getStodownloadCandidates
@@ -770,6 +771,7 @@ function App() {
 
         if (result.ok) {
           const ext =
+            extFromBytes(result.buffer) ||
             extFromContentType(result.contentType) ||
             extFromUrl(result.usedUrl) ||
             'gif'
