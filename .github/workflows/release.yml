@@ -4,7 +4,7 @@ name: release
 on:
   push:
     tags:
-      - 'v*' # 监听所有以 v 开头的 tag（如 v0.1.0）
+      - 'v*' # 监听所有以 v 开头的 tag（如 v0.1.1）
 
 jobs:
   publish-tauri:
@@ -18,10 +18,12 @@ jobs:
           - runner: macos-latest
             app_arch: arm64
             tauri_arch: aarch64
+            tauri_target: aarch64-apple-darwin
             build_cli: true
-          - runner: macos-13
+          - runner: macos-latest
             app_arch: x64
             tauri_arch: x64
+            tauri_target: x86_64-apple-darwin
             build_cli: false
 
     runs-on: ${{ matrix.runner }}
@@ -42,6 +44,9 @@ jobs:
 
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
+
+      - name: add Rust targets
+        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
 
       - name: build key dumper dylib (for app auto-dump)
         run: bash tools/wechat-key-dumper/build.sh
@@ -67,6 +72,7 @@ jobs:
         with:
           tagName: v__VERSION__ # tag的名称: v__VERSION__是指版本号
           releaseName: 导出微信表情包 + wxemoticon v__VERSION__
+          args: --target ${{ matrix.tauri_target }}
           releaseBody: |
             本版本同时发布 App 与 CLI：
 
