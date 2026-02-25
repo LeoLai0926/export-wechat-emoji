@@ -7,6 +7,35 @@ export async function extractFavUrls(
   return await invoke<Array<string>>('extract_fav_urls', { favArchivePath })
 }
 
+export async function extractEmoticonUrlsV4(
+  emoticonDbPath: string,
+  dbKey: string
+): Promise<Array<string>> {
+  return await invoke<Array<string>>('extract_emoticon_urls_v4', {
+    emoticonDbPath,
+    dbKey
+  })
+}
+
+export type AutoDumpUrlsResult = {
+  wxid: string
+  dbKey: string
+  dbKeyFile: string
+  urlsFile: string
+  logFile: string
+  urls: Array<string>
+}
+
+export async function autoDumpEmoticonUrlsV4(
+  wxidDir: string,
+  wechatAppPath?: string
+): Promise<AutoDumpUrlsResult> {
+  return await invoke<AutoDumpUrlsResult>('auto_dump_emoticon_urls_v4', {
+    wechatAppPath,
+    wxidDir
+  })
+}
+
 export function normalizeEmojiUrl(
   url: string,
   opts: { wxappDomain: string; vweixinfDomain: string }

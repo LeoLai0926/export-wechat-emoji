@@ -1,9 +1,10 @@
 [package]
 name = "导出微信表情包"
-version = "0.0.3"
+version = "0.1.0"
 description = "一个在 macOS 上导出微信所有表情包的小工具"
 authors = ["liusheng <black.liusheng@gmail.com>"]
 edition = "2021"
+autobins = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -11,11 +12,31 @@ edition = "2021"
 tauri-build = { version = "1", features = [] }
 
 [dependencies]
-tauri = { version = "1", features = [ "dialog-message", "fs-remove-file", "http-all", "shell-execute", "fs-copy-file", "fs-read-dir", "fs-exists", "fs-read-file", "fs-create-dir", "path-all", "fs-write-file"] }
+tauri = { version = "1", features = [ "clipboard-write-text", "dialog-open", "dialog-message", "fs-remove-file", "http-all", "shell-execute", "fs-copy-file", "fs-read-dir", "fs-exists", "fs-read-file", "fs-create-dir", "path-all", "fs-write-file"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 plist = "1"
+aes = "0.8"
+anyhow = "1"
+cbc = "0.1"
+cipher = "0.4"
+hex = "0.4"
+hmac = "0.12"
+pbkdf2 = "0.12"
+rusqlite = { version = "0.31", features = ["bundled"] }
+sha2 = "0.10"
+tempfile = "3"
 
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!
 custom-protocol = ["tauri/custom-protocol"]
+dev-tools = []
+
+[[bin]]
+name = "导出微信表情包"
+path = "src/main.rs"
+
+[[bin]]
+name = "extract-emoticon-urls"
+path = "src/bin/extract-emoticon-urls.rs"
+required-features = ["dev-tools"]

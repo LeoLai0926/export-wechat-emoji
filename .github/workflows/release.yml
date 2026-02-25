@@ -4,7 +4,7 @@ name: release
 on:
   push:
     tags:
-      - 'v*' # 监听所有以 v 开头的 tag（如 v0.0.3）
+      - 'v*' # 监听所有以 v 开头的 tag（如 v0.1.0）
 
 jobs:
   publish-tauri:
@@ -34,6 +34,9 @@ jobs:
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
 
+      - name: build key dumper dylib (for app auto-dump)
+        run: bash tools/wechat-key-dumper/build.sh
+
       - name: install frontend dependencies
         run: pnpm install --frozen-lockfile
         id: install_frontend_dependencies
@@ -51,7 +54,40 @@ jobs:
 
         with:
           tagName: v__VERSION__ # tag的名称: v__VERSION__是指版本号
-          releaseName: 导出微信表情包 v__VERSION__
-          releaseBody: 导出微信表情包APP v__VERSION__ 发布
+          releaseName: 导出微信表情包 + wxemoticon v__VERSION__
+          releaseBody: |
+            本版本同时发布 App 与 CLI：
+
+            - macOS App：导出微信表情包
+            - CLI：wxemoticon（aarch64 / x86_64）
+            - 安装脚本：install-wxemoticon.sh
+
+            CLI 安装：
+            curl -fsSL https://raw.githubusercontent.com/liusheng22/export-wechat-emoji/main/scripts/install-wxemoticon.sh | bash
+
+            CLI 常用命令：
+            - wxemoticon key
+            - wxemoticon urls
+            - wxemoticon export
           releaseDraft: false
           prerelease: false
+
+      - name: build wxemoticon cli (arm64 + x86_64)
+        run: |
+          rustup target add x86_64-apple-darwin
+          cargo build --manifest-path cli/Cargo.toml --release
+          cargo build --manifest-path cli/Cargo.toml --release --target x86_64-apple-darwin
+          tar -czf wxemoticon-aarch64-apple-darwin.tar.gz -C cli/target/release wxemoticon
+          tar -czf wxemoticon-x86_64-apple-darwin.tar.gz -C cli/target/x86_64-apple-darwin/release wxemoticon
+          shasum -a 256 wxemoticon-*.tar.gz > wxemoticon-SHA256SUMS.txt
+
+      - name: upload wxemoticon cli assets
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: |
+            wxemoticon-aarch64-apple-darwin.tar.gz
+            wxemoticon-x86_64-apple-darwin.tar.gz
+            wxemoticon-SHA256SUMS.txt
+            scripts/install-wxemoticon.sh

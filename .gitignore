@@ -11,7 +11,11 @@ node_modules
 dist
 dist-ssr
 README
+docs
 *.local
+tools/wechat-key-dumper/*.dylib
+cli/target
+scripts/*bak*
 
 # Editor directories and files
 .vscode/*

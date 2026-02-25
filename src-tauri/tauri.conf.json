@@ -1,14 +1,14 @@
 {
   "build": {
-    "beforeDevCommand": "pnpm dev",
-    "beforeBuildCommand": "pnpm build",
+    "beforeDevCommand": "bash tools/wechat-key-dumper/build.sh && pnpm dev",
+    "beforeBuildCommand": "bash tools/wechat-key-dumper/build.sh && pnpm build",
     "withGlobalTauri": true,
     "devPath": "http://localhost:1420",
     "distDir": "../dist"
   },
   "package": {
     "productName": "导出微信表情包",
-    "version": "0.0.3"
+    "version": "0.1.0"
   },
   "tauri": {
     "allowlist": {
@@ -22,7 +22,11 @@
         "scope": ["https://*", "http://*"]
       },
       "dialog": {
-        "message": true
+        "message": true,
+        "open": true
+      },
+      "clipboard": {
+        "writeText": true
       },
       "shell": {
         "execute": true,
@@ -30,7 +34,7 @@
           {
             "name": "open-dir",
             "cmd": "open",
-            "args": [{ "validator": "\\S+" }]
+            "args": [{ "validator": ".+" }]
           }
         ]
       },
@@ -58,7 +62,7 @@
     "bundle": {
       "active": true,
       "targets": "all",
-      "identifier": "cn.laijiayang.export-wechat-emoji",
+      "identifier": "me.lius.wxemoticon",
       "macOS": {
         "exceptionDomain": "wxapp.tc.qq.com,vweixinf.tc.qq.com"
       },
@@ -68,12 +72,13 @@
         "icons/128x128@2x.png",
         "icons/icon.icns",
         "icons/icon.ico"
-      ]
+      ],
+      "resources": ["../tools/wechat-key-dumper/wechat_key_dumper.dylib"]
     },
     "updater": {
       "active": false,
       "dialog": true,
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEM2RDhCOTg1MDgzRkUzMjYKUldRbTR6OEloYm5ZeG9VL3UzcHg4UWtyM1Y0WTdPRkRHSC9DWkRKSitvOVBhUDlONGV1SmE2MkcK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEJGODVBMkUxODc2OTA1ODMKUldTREJXbUg0YUtGdnhtTW5WZnpDejRwU04wN3d3SDlsREZvelNta3o0eVJKd2ZIcFRNZGtvelIK",
       "windows": {
         "installMode": "passive",
         "installerArgs": []
