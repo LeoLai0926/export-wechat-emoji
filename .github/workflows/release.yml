@@ -143,3 +143,44 @@ jobs:
             wxemoticon-x86_64-apple-darwin.tar.gz
             wxemoticon-SHA256SUMS.txt
             scripts/install-wxemoticon.sh
+
+  cleanup-release-default-assets:
+    needs: publish-tauri
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: remove tauri default-named app assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          REPO="${GITHUB_REPOSITORY}"
+          TAG="${GITHUB_REF_NAME}"
+          API="https://api.github.com/repos/${REPO}/releases/tags/${TAG}"
+
+          JSON="$(curl -fsSL \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "${API}")"
+
+          ASSETS="$(echo "${JSON}" | jq -r '
+            .assets[]
+            | select((.name | startswith("_")) and ((.name | endswith(".dmg")) or (.name | endswith(".app.tar.gz"))))
+            | [.id, .name]
+            | @tsv
+          ')"
+
+          if [[ -z "${ASSETS}" ]]; then
+            echo "No tauri default-named app assets to clean."
+            exit 0
+          fi
+
+          while IFS=$'\t' read -r ID NAME; do
+            [[ -z "${ID}" ]] && continue
+            echo "Deleting asset: ${NAME} (id=${ID})"
+            curl -fsSL -X DELETE \
+              -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${REPO}/releases/assets/${ID}" >/dev/null
+          done <<< "${ASSETS}"
