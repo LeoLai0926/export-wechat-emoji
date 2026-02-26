@@ -14,11 +14,16 @@
 - 支持断点续跑（跳过已存在文件）与导出统计
 - 提供可选 CLI：`wxemoticon`
 
-## 下载与安装（普通用户）
+## 下载与安装（GUI）
 
 1. 打开 GitHub Releases：<https://github.com/liusheng22/export-wechat-emoji/releases>
-2. 下载最新版本的 macOS 安装包（`.dmg`）
+2. 按芯片类型下载对应 App 安装包（推荐 `.dmg`）：
+   - Apple Silicon（M1/M2/M3）：`wxemoticon-app-macos-arm64.dmg`
+   - Intel Mac：`wxemoticon-app-macos-x64.dmg`
 3. 按常规方式安装并打开 `导出微信表情包.app`
+
+芯片类型查看方式：
+- macOS 左上角苹果图标 → “关于本机” → 查看“芯片”
 
 如果出现“应用已损坏，无法打开”，可参考：
 - <https://juejin.cn/post/7597271614942134291>
@@ -36,20 +41,34 @@
 - 导出目录默认在 `~/Downloads/微信表情包_导出_时间戳`。
 - 导出信息会放在 `导出信息/` 子目录（如 `emoticon_urls.txt`、`使用说明.txt`）。
 
-## CLI（可选，命令行方式）
+## CLI（命令行方式）
 
 如果你更喜欢命令行，可使用 `wxemoticon`（macOS）。
 
-安装：
+安装最新版本：
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/liusheng22/export-wechat-emoji/main/scripts/install-wxemoticon.sh | bash
 ```
 
+升级到指定版本（例如 `v0.1.1`）：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/liusheng22/export-wechat-emoji/main/scripts/install-wxemoticon.sh | env WXEMOTICON_VERSION=v0.1.1 bash
+```
+
 安装后验证：
 
 ```bash
+wxemoticon --version
 wxemoticon --help
+```
+
+如果提示找不到命令，可把 `~/.local/bin` 加入 PATH（zsh）：
+
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
 ```
 
 ### CLI 能力总览
